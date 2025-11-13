@@ -47,8 +47,17 @@ docker run -e ConnectionStrings__DefaultConnection="..." -p 5000:80 kopiaku:late
 ```
 
 Environment variables
-- ConnectionStrings__DefaultConnection — DB connection string
-- Jwt__Issuer, Jwt__Audience, Jwt__Key — JWT settings
+- MongoDBSettings__ConnectionString
+- MongoDBSettings__DatabaseName
+
+- JWTSettings__SecretKey
+- JWTSettings__Issuer
+- JWTSettings__Audience
+- JWTSettings__ExpiryInMinutes
+
+- B2Settings__BaseUrl
+- B2Settings__AccessKey
+- B2Settings__SecretKey
 - ASPNETCORE_ENVIRONMENT — Development | Production
 
 ## Authentication & Authorization
