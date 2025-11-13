@@ -31,13 +31,9 @@ Local run (example)
 dotnet restore
 dotnet build
 
-# apply migrations (EF Core)
-dotnet ef database update --project src/KopiAku.Data
-
 # run API
-dotnet run --project src/KopiAku.Api
-# default GraphQL endpoint: http://localhost:5000/graphql
-# interactive UI (HotChocolate Banana Cake Pop): http://localhost:5000/graphql/ui
+dotnet run
+# default GraphQL endpoint: http://localhost:5031/graphql
 ```
 
 Docker
