@@ -1,0 +1,6 @@
+@KopiAku_HostAddress = http://localhost:5031
+
+GET {{KopiAku_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
