@@ -2,6 +2,8 @@ using MongoDB.Driver;
 using KopiAku.Models;
 using HotChocolate.Data;
 using HotChocolate.Authorization;
+using KopiAku.DTOs;
+using System.Security.Claims;
 
 
 namespace KopiAku.GraphQL.Users
@@ -17,6 +19,47 @@ namespace KopiAku.GraphQL.Users
         {
             var collection = database.GetCollection<User>("users");
             return collection.AsExecutable();
+        }
+
+        [Authorize]
+        public async Task<User?> GetUserByIdAsync(
+            string id,
+            [Service] IMongoDatabase database)
+        {
+            var collection = database.GetCollection<User>("users");
+            var filter = Builders<User>.Filter.Eq(u => u.Id, id);
+            return await collection.Find(filter).FirstOrDefaultAsync();
+        }
+
+        [Authorize]
+        public async Task<RegisterResponse> GetMyProfileAsync(
+            [Service] IMongoDatabase database,
+            ClaimsPrincipal claimsPrincipal)
+        {
+            var collection = database.GetCollection<User>("users");
+            var userId = (claimsPrincipal.FindFirst("sub")?.Value
+                     ?? claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value) ?? throw new GraphQLException(ErrorBuilder.New()
+                    .SetMessage("User ID not found in claims.")
+                    .SetCode("USER_ID_NOT_FOUND")
+                    .Build());
+
+            var filter = Builders<User>.Filter.Eq(u => u.Id, userId);
+            var user = await collection.Find(filter).FirstOrDefaultAsync() ?? throw new GraphQLException(ErrorBuilder.New()
+                    .SetMessage("User not found.")
+                    .SetCode("USER_NOT_FOUND")
+                    .Build());
+                    
+            return new RegisterResponse
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Username = user.Username,
+                Email = user.Email,
+                Role = user.Role,
+                Contact = user.Contact,
+                IsActive = user.IsActive,
+                ProfilePictureUrl = user.ProfilePictureUrl
+            };
         }
     }
 }

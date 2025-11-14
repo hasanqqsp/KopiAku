@@ -9,7 +9,7 @@ namespace KopiAku.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; } = null!;
 
-        [BsonElement("Name")]
+        [BsonElement("name")]
         public string Name { get; set; } = null!;
 
         [BsonElement("username")]
@@ -23,6 +23,12 @@ namespace KopiAku.Models
 
         [BsonElement("contact")]
         public string? Contact { get; set; }
+
+        [BsonElement("isActive")]
+        public bool IsActive { get; set; } = false;
+
+        [BsonElement("profilePictureUrl")]
+        public string? ProfilePictureUrl { get; set; }
 
         [BsonElement("passwordHash")]
         public string PasswordHash { get; set; } = null!;

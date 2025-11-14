@@ -1,6 +1,6 @@
 namespace KopiAku.DTOs
 {
-    public class RegisterResponse
+    public class UpdateUserProfileResponse
     {
         public string Id { get; set; } = null!;
         public string Name { get; set; } = null!;
