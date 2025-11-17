@@ -12,6 +12,7 @@ using KopiAku.GraphQL;
 using KopiAku.GraphQL.Users;
 using KopiAku.GraphQL.Menus;
 using KopiAku.GraphQL.Presences;
+using KopiAku.GraphQL.StocksManagement;
 
 Env.Load();
 
@@ -87,6 +88,8 @@ builder.Services.AddGraphQLServer()
     .AddTypeExtension<MenuMutations>()
     .AddTypeExtension<PresenceQueries>()
     .AddTypeExtension<PresenceMutations>()
+    .AddTypeExtension<StockManagementQueries>()
+    .AddTypeExtension<StockManagementMutations>()
     .AddAuthorization()
     .AddMongoDbFiltering()
     .AddMongoDbSorting()
