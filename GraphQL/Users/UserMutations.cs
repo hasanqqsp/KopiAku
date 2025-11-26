@@ -86,7 +86,7 @@ namespace KopiAku.GraphQL.Users
         public async Task<UpdateUserProfileResponse> UpdateUserProfileAsync(
             string userId,
             RegisterInput input,
-            [GraphQLType(typeof(UploadType))] IFile profilePicture,
+            [GraphQLType(typeof(UploadType))] IFile? profilePicture,
             [Service] IMongoDatabase database)
         {
             var collection = database.GetCollection<User>("users");
