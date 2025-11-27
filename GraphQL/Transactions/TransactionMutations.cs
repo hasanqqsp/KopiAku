@@ -66,7 +66,6 @@ namespace KopiAku.GraphQL.Transactions
             // create the transaction
             var newTransaction = new Transaction
             {
-                Id = transaction.Id,
                 UserId = transaction.UserId,
                 MenuItems = validatedMenuItems,
                 TotalAmount = totalAmount,
