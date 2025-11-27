@@ -12,7 +12,7 @@ namespace KopiAku.GraphQL.Users
     public class UserQueries
     {
         [Authorize(Roles = new[] { "Admin" })]
-        [UsePaging(IncludeTotalCount = true)]
+        [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseFiltering]
         [UseSorting]
         public IExecutable<User> GetUsers([Service] IMongoDatabase database)

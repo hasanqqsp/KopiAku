@@ -9,7 +9,7 @@ namespace KopiAku.GraphQL.Transactions
     public class TransactionQueries
     {
         [Authorize]
-        [UsePaging(IncludeTotalCount = true)]
+        [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseFiltering]
         [UseSorting]
         public IExecutable<Transaction> GetTransactions([Service] IMongoDatabase database)

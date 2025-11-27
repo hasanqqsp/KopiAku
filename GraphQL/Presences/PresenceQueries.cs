@@ -10,7 +10,7 @@ namespace KopiAku.GraphQL.Presences
     public class PresenceQueries
     {
         [Authorize(Roles = new[] { "Admin" })]
-        [UsePaging(IncludeTotalCount = true)]
+        [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseFiltering]
         [UseSorting]
         public IExecutable<Presence> GetPresences([Service] IMongoDatabase database)

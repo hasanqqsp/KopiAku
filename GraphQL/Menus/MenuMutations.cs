@@ -38,6 +38,7 @@ namespace KopiAku.GraphQL.Menus
                 {
                     Name = menu.Name,
                     Description = menu.Description,
+                    Category = menu.Category,
                     Price = menu.Price,
                     ImageUrl = $"https://storage.czn.my.id/{_bucketName}/{imageKey}",
                     IsAvailable = false

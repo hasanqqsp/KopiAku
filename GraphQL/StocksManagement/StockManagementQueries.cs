@@ -9,7 +9,7 @@ namespace KopiAku.GraphQL.StocksManagement
     public class StockManagementQueries
     {
         [Authorize(Roles = new[] { "Admin" })]
-        [UsePaging(IncludeTotalCount = true)]
+        [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseFiltering]
         [UseSorting]
         public IExecutable<Stock> GetStocks([Service] IMongoDatabase database)
@@ -19,7 +19,7 @@ namespace KopiAku.GraphQL.StocksManagement
         }
 
         [Authorize(Roles = new[] { "Admin" })]
-        [UsePaging(IncludeTotalCount = true)]
+        [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseFiltering]
         [UseSorting]
         public IExecutable<StockLog> GetStockLogs([Service] IMongoDatabase database)

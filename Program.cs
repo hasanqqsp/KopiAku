@@ -15,6 +15,7 @@ using KopiAku.GraphQL.Recipes;
 using KopiAku.GraphQL.Presences;
 using KopiAku.GraphQL.Transactions;
 using KopiAku.GraphQL.StocksManagement;
+using KopiAku.GraphQL.ContentsManagement;
 
 Env.Load();
 
@@ -101,6 +102,8 @@ builder.Services.AddGraphQLServer()
     .AddTypeExtension<TransactionMutations>()
     .AddTypeExtension<StockManagementQueries>()
     .AddTypeExtension<StockManagementMutations>()
+    .AddTypeExtension<ContentManagementQueries>()
+    .AddTypeExtension<ContentManagementMutations>()
     .AddAuthorization()
     .AddMongoDbFiltering()
     .AddMongoDbSorting()
