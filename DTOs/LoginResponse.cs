@@ -1,3 +1,5 @@
+using KopiAku.Models;
+
 namespace KopiAku.DTOs
 {
     public class LoginResponse
@@ -9,5 +11,7 @@ namespace KopiAku.DTOs
         public string Email { get; set; } = null!;
         public string? ProfilePictureUrl { get; set; }
         public bool IsActive { get; set; }
+        public string Role { get; set; } = null!;
+        public Presence? Presence { get; set; }
     }
 }

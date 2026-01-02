@@ -39,6 +39,14 @@ namespace KopiAku.GraphQL.Users
                     .SetCode("USER_NOT_FOUND")
                     .Build());
                     
+            var presenceCollection = database.GetCollection<Presence>("presences");
+            var utcNow = DateTime.UtcNow;
+            var offset = TimeSpan.FromHours(7);
+            var nowInTz = utcNow + offset;
+            var todayStart = nowInTz.Date - offset;
+            var todayEnd = todayStart + TimeSpan.FromDays(1);
+            var presence = await presenceCollection.Find(p => p.UserId == user.Id && p.CheckInTime >= todayStart && p.CheckInTime < todayEnd && p.CheckOutTime == default(DateTime)).FirstOrDefaultAsync();
+                    
             return new RegisterResponse
             {
                 Id = user.Id,
@@ -48,7 +56,8 @@ namespace KopiAku.GraphQL.Users
                 Role = user.Role,
                 Contact = user.Contact,
                 IsActive = user.IsActive,
-                ProfilePictureUrl = user.ProfilePictureUrl
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                Presence = presence
             };
         }
     }

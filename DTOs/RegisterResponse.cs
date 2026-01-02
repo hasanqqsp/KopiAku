@@ -1,3 +1,5 @@
+using KopiAku.Models;
+
 namespace KopiAku.DTOs
 {
     public class RegisterResponse
@@ -10,5 +12,6 @@ namespace KopiAku.DTOs
         public string? Contact { get; set; }
         public bool IsActive { get; set; }
         public string? ProfilePictureUrl { get; set; }
+        public Presence? Presence { get; set; }
     }
 }

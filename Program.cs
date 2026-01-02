@@ -9,6 +9,8 @@ using System.Text;
 using KopiAku.Settings;
 using KopiAku.Services;
 using KopiAku.GraphQL;
+using KopiAku.Models;
+using KopiAku.DTOs;
 using KopiAku.GraphQL.Users;
 using KopiAku.GraphQL.Menus;
 using KopiAku.GraphQL.Recipes;
@@ -90,17 +92,31 @@ builder.Services.AddGraphQLServer()
     })
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
+    .AddType<Presence>()
+    .AddType<DashboardResponse>()
+    .AddType<StockStatus>()
+    .AddType<DailySales>()
+    .AddType<Recipe>()
+    .AddType<Stock>()
+    .AddType<StockLog>()
+    .AddTypeExtension<DashboardQueries>()
     .AddTypeExtension<UserQueries>()
     .AddTypeExtension<UserMutations>()
     .AddTypeExtension<MenuQueries>()
+    .AddTypeExtension<MenuResolvers>()
+    .AddTypeExtension<RecipeIngredientResolvers>()
     .AddTypeExtension<MenuMutations>()
     .AddTypeExtension<RecipeQueries>()
     .AddTypeExtension<RecipeMutations>()
     .AddTypeExtension<PresenceQueries>()
     .AddTypeExtension<PresenceMutations>()
     .AddTypeExtension<TransactionQueries>()
+    .AddTypeExtension<TransactionResolvers>()
+    .AddTypeExtension<TransactionMenuItemResolvers>()
     .AddTypeExtension<TransactionMutations>()
     .AddTypeExtension<StockManagementQueries>()
+    .AddTypeExtension<StockResolvers>()
+    .AddTypeExtension<StockLogResolvers>()
     .AddTypeExtension<StockManagementMutations>()
     .AddTypeExtension<ContentManagementQueries>()
     .AddTypeExtension<ContentManagementMutations>()

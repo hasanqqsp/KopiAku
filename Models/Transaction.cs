@@ -24,8 +24,16 @@ namespace KopiAku.Models
 
         [BsonElement("transactionDate")]
         public DateTime TransactionDate { get; set; }
-    }
 
+        [BsonElement("qrisTransactionTime")]
+        public DateTime? QrisTransactionTime { get; set; }
+
+        [BsonElement("qrisOrderId")]
+        public string? QrisOrderId { get; set; }
+
+        [BsonElement("netAmount")]
+        public decimal? NetAmount { get; set; }
+    }
     public class TransactionMenuItem
     {
         [BsonElement("menuId")]

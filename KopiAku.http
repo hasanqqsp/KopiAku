@@ -4,3 +4,127 @@ GET {{KopiAku_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+POST {{KopiAku_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query GetTransactions { transactions { nodes { id userId totalAmount status transactionDate qrisTransactionTime qrisOrderId netAmount menuItems { menuId quantity unitPrice name } user { id username email role } } } }"
+}
+
+###
+
+POST {{KopiAku_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query GetTransactionById($id: String!) { transactionById(id: $id) { id userId totalAmount status transactionDate qrisTransactionTime qrisOrderId netAmount menuItems { menuId quantity unitPrice name } user { id username email role } } }",
+  "variables": {
+    "id": "transaction_id_here"
+  }
+}
+
+###
+
+POST {{KopiAku_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation CreateTransaction($transaction: TransactionInput!) { createTransaction(transaction: $transaction) { id userId totalAmount status transactionDate menuItems { menuId quantity unitPrice name } } }",
+  "variables": {
+    "transaction": {
+      "userId": "user_id_here",
+      "menuItems": [
+        {
+          "menuId": "menu_id_here",
+          "quantity": 1
+        }
+      ],
+      "totalAmount": 100.0,
+      "status": "pending",
+      "transactionDate": "2025-12-19T10:00:00Z"
+    }
+  }
+}
+
+###
+
+POST {{KopiAku_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation CheckOut { checkOut { id userId checkInTime checkOutTime validated imageUrl } }"
+}
+
+###
+
+POST {{KopiAku_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query GetTransactionsByUserId($userId: String!) { transactionsByUserId(userId: $userId) { nodes { id userId totalAmount status transactionDate qrisTransactionTime qrisOrderId netAmount menuItems { menuId quantity unitPrice name } user { id username email role } } } }",
+  "variables": {
+    "userId": "user_id_here"
+  }
+}
+
+###
+
+POST {{KopiAku_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query GetTransactionsByStatus($status: String!, $qrisOrderIds: [String!]!) { transactionsByStatus(status: $status, qrisOrderIds: $qrisOrderIds) { transactions { id userId totalAmount status transactionDate qrisTransactionTime qrisOrderId netAmount menuItems { menuId quantity unitPrice name } user { id username email role } } existingQrisOrderIds } }",
+  "variables": {
+    "status": "pending",
+    "qrisOrderIds": ["qris_123", "qris_456"]
+  }
+}
+
+###
+
+POST {{KopiAku_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation ReconcileTransactions($reconciliationData: [ReconciliationItemInput!]!) { reconcileTransactions(reconciliationData: $reconciliationData) }",
+  "variables": {
+    "reconciliationData": [
+      {
+        "transactionId": "6944f43cd87fc35a31003654",
+        "qrisOrderId": "QRIS-0520251219064412ADeL3C",
+        "qrisTransactionTime": "2025-12-19T13:44:07.823+07:00",
+        "netAmount": 55000,
+        "status": "VERIFIED"
+      },
+      {
+        "transactionId": "69444a9f5d0b62e0db1f4149",
+        "qrisOrderId": "QRIS-0520251218184031ADeL1A",
+        "qrisTransactionTime": "2025-12-19T01:40:34.793+07:00",
+        "netAmount": 63000,
+        "status": "VERIFIED"
+      },
+      {
+        "transactionId": "6944f433d87fc35a3100364f",
+        "qrisOrderId": "QRIS-0520251219064403ADeL2B",
+        "qrisTransactionTime": "2025-12-19T13:44:08.677+07:00",
+        "netAmount": 38000,
+        "status": "VERIFIED"
+      },
+      {
+        "transactionId": "6944f448d87fc35a3100365b",
+        "qrisOrderId": "QRIS-0520251219064424ADeL4D",
+        "qrisTransactionTime": "2025-12-19T13:44:30.146+07:00",
+        "netAmount": 36000,
+        "status": "VERIFIED"
+      },
+      {
+        "qrisOrderId": "QRIS-0520251219064450ADeL5E",
+        "qrisTransactionTime": "2025-12-19T13:44:54.146+07:00",
+        "totalAmount": 42000,
+        "netAmount": 42000,
+        "status": "CREATE_NEW"
+      }
+    ]
+  }
+}

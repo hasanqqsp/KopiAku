@@ -1,6 +1,9 @@
 using MongoDB.Driver;
 using KopiAku.Models;
+using KopiAku.DTOs;
 using HotChocolate.Authorization;
+using System.Collections.Generic;
+using System;
 
 namespace KopiAku.GraphQL.StocksManagement
 {
@@ -267,6 +270,67 @@ namespace KopiAku.GraphQL.StocksManagement
 
             await stockCollection.ReplaceOneAsync(s => s.Id == stockId, stock);
             return stock;
+        }
+
+        [Authorize(Roles = new[] { "Admin" })]
+        public async Task<List<Stock>> BatchUpdateStocksAsync(
+            List<StockBatchUpdateInput> updates,
+            [Service] IMongoDatabase database)
+        {
+            var stockCollection = database.GetCollection<Stock>("stocks");
+            var menuCollection = database.GetCollection<Menu>("menus");
+            var recipeCollection = database.GetCollection<Recipe>("recipes");
+            var stockLogCollection = database.GetCollection<StockLog>("stock-logs");
+
+            var updatedStocks = new List<Stock>();
+
+            foreach (var update in updates)
+            {
+                var stock = await stockCollection.Find(s => s.Id == update.StockId).FirstOrDefaultAsync();
+                if (stock == null)
+                {
+                    throw new GraphQLException(new Error($"Stock with ID {update.StockId} not found", "STOCK_NOT_FOUND"));
+                }
+
+                var beforeQuantity = stock.Quantity;
+                stock.Quantity = update.Quantity;
+
+                await stockCollection.ReplaceOneAsync(s => s.Id == update.StockId, stock);
+                updatedStocks.Add(stock);
+
+                // Log the stock update
+                var stockLog = new StockLog
+                {
+                    StockId = update.StockId,
+                    Type = update.Quantity > beforeQuantity ? "in" : "out",
+                    Quantity = Math.Abs(update.Quantity - beforeQuantity),
+                    BeforeQuantity = beforeQuantity,
+                    AfterQuantity = update.Quantity,
+                    Reason = "Batch stock update",
+                    Timestamp = DateTime.UtcNow
+                };
+                await stockLogCollection.InsertOneAsync(stockLog);
+            }
+
+            // Update menu availability based on updated stocks
+            var recipes = await recipeCollection.Find(_ => true).ToListAsync();
+            foreach (var recipe in recipes)
+            {
+                bool isAvailable = true;
+                foreach (var ingredient in recipe.Ingredients)
+                {
+                    var stock = await stockCollection.Find(s => s.Id == ingredient.StockId).FirstOrDefaultAsync();
+                    if (stock == null || stock.Quantity < ingredient.Quantity)
+                    {
+                        isAvailable = false;
+                        break;
+                    }
+                }
+                var update = Builders<Menu>.Update.Set(m => m.IsAvailable, isAvailable);
+                await menuCollection.UpdateOneAsync(m => m.Id == recipe.MenuId, update);
+            }
+
+            return updatedStocks;
         }
     }
 }

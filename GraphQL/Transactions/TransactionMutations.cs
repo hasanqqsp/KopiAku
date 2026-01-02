@@ -148,6 +148,56 @@ namespace KopiAku.GraphQL.Transactions
         }
 
         [Authorize(Roles = new[] { "Admin" })]
+        public async Task<List<string>> ReconcileTransactionsAsync(
+            List<ReconciliationItemInput> reconciliationData,
+            [Service] IMongoDatabase database)
+        {
+            var collection = database.GetCollection<Transaction>("transactions");
+            var results = new List<string>();
+
+            foreach (var item in reconciliationData)
+            {
+                if (!string.IsNullOrEmpty(item.TransactionId))
+                {
+                    // Update existing transaction
+                    var transaction = await collection.Find(t => t.Id == item.TransactionId).FirstOrDefaultAsync();
+                    if (transaction != null)
+                    {
+                        transaction.QrisOrderId = item.QrisOrderId;
+                        transaction.QrisTransactionTime = item.QrisTransactionTime;
+                        transaction.NetAmount = item.NetAmount;
+                        transaction.Status = item.Status;
+                        await collection.ReplaceOneAsync(t => t.Id == transaction.Id, transaction);
+                        results.Add($"Updated transaction {item.TransactionId}");
+                    }
+                    else
+                    {
+                        results.Add($"Transaction {item.TransactionId} not found");
+                    }
+                }
+                else
+                {
+                    // Create new transaction for CREATE_NEW
+                    var newTransaction = new Transaction
+                    {
+                        UserId = "system", // Default user for reconciliation
+                        MenuItems = new List<TransactionMenuItem>(),
+                        TotalAmount = item.TotalAmount ?? item.NetAmount,
+                        Status = item.Status,
+                        TransactionDate = DateTime.UtcNow,
+                        QrisOrderId = item.QrisOrderId,
+                        QrisTransactionTime = item.QrisTransactionTime,
+                        NetAmount = item.NetAmount
+                    };
+                    await collection.InsertOneAsync(newTransaction);
+                    results.Add($"Created new transaction {newTransaction.Id}");
+                }
+            }
+
+            return results;
+        }
+
+        [Authorize(Roles = new[] { "Admin" })]
         public async Task<bool> DeleteTransactionAsync(
             string transactionId,
             [Service] IMongoDatabase database)

@@ -22,7 +22,7 @@ namespace KopiAku.GraphQL.Users
         {
             var collection = database.GetCollection<User>("users");
 
-            var user = await collection.Find(u => u.Username == input.Username).FirstOrDefaultAsync();
+            var user = await collection.Find(u => u.Username.ToLower() == input.Username.ToLower()).FirstOrDefaultAsync();
             if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.PasswordHash))
             {
                 throw new GraphQLException("Invalid username or password.");
@@ -31,6 +31,14 @@ namespace KopiAku.GraphQL.Users
             // In a real application, generate a JWT or similar token here
             var token = jwtService.GenerateToken(user);
 
+            var presenceCollection = database.GetCollection<Presence>("presences");
+            var utcNow = DateTime.UtcNow;
+            var offset = TimeSpan.FromHours(7);
+            var nowInTz = utcNow + offset;
+            var todayStart = nowInTz.Date - offset;
+            var todayEnd = todayStart + TimeSpan.FromDays(1);
+            var presence = await presenceCollection.Find(p => p.UserId == user.Id && p.CheckInTime >= todayStart && p.CheckInTime < todayEnd && p.CheckOutTime == default(DateTime)).FirstOrDefaultAsync();
+
             return new LoginResponse
             {
                 Token = token,
@@ -38,8 +46,10 @@ namespace KopiAku.GraphQL.Users
                 Name = user.Name,
                 Username = user.Username,
                 ProfilePictureUrl = user.ProfilePictureUrl,
+                Role = user.Role,
                 IsActive = user.IsActive,
-                Email = user.Email
+                Email = user.Email,
+                Presence = presence
             };
         }
 
@@ -50,7 +60,7 @@ namespace KopiAku.GraphQL.Users
         {
             var collection = database.GetCollection<User>("users");
 
-            var existingUser = await collection.Find(u => u.Username == input.Username || u.Email == input.Email || u.Name == input.Name).FirstOrDefaultAsync();
+            var existingUser = await collection.Find(u => u.Username.ToLower() == input.Username.ToLower() || u.Email == input.Email || u.Name == input.Name).FirstOrDefaultAsync();
             if (existingUser != null)
             {
                 throw new GraphQLException("Username, email, or name already exists.");
@@ -64,7 +74,7 @@ namespace KopiAku.GraphQL.Users
                 Role = "User",
                 Contact = input.Contact,
                 IsActive = false,
-                ProfilePictureUrl = "https://ui-avatars.com/api/?size=256&font-size=0.01&background=0D8ABC",
+                ProfilePictureUrl = $"https://ui-avatars.com/api/?size=256&background=0D8ABC&name={Uri.EscapeDataString(input.Name)}",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(input.Password)
             };
 

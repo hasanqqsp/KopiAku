@@ -79,14 +79,14 @@ namespace KopiAku.GraphQL.Presences
                     .Build());
 
             var filter = Builders<Presence>.Filter.Eq(p => p.UserId, userId) &
-                         Builders<Presence>.Filter.Gte(p => p.CheckInTime, DateTime.UtcNow.AddHours(-1));
-
-            var presence = await collection.Find(filter).FirstOrDefaultAsync() ?? throw new GraphQLException(ErrorBuilder.New()
+                         Builders<Presence>.Filter.Eq(p => p.CheckOutTime, default(DateTime));
+                        
+            var presence = await collection.Find(filter).SortByDescending(p => p.CheckInTime).FirstOrDefaultAsync() ?? throw new GraphQLException(ErrorBuilder.New()
                     .SetMessage("No active presence found.")
                     .SetCode("NO_ACTIVE_PRESENCE")
                     .Build());
             presence.CheckOutTime = DateTime.UtcNow;
-            await collection.ReplaceOneAsync(filter, presence);
+            await collection.ReplaceOneAsync(p => p.Id == presence.Id, presence);
             return presence;
         }
 
