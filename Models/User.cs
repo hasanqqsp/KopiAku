@@ -12,6 +12,9 @@ namespace KopiAku.Models
         [BsonElement("name")]
         public string Name { get; set; } = null!;
 
+        [BsonElement("nickname")]
+        public string? Nickname { get; set; }
+
         [BsonElement("username")]
         public string Username { get; set; } = null!;
 

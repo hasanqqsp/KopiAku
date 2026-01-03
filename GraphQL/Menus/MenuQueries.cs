@@ -10,7 +10,6 @@ namespace KopiAku.GraphQL.Menus
     public class MenuQueries
     {
         // Get Menus
-        [Authorize]
         [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseSorting]
         public IExecutable<Menu> GetMenus([Service] IMongoDatabase database)

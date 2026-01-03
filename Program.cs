@@ -17,7 +17,11 @@ using KopiAku.GraphQL.Recipes;
 using KopiAku.GraphQL.Presences;
 using KopiAku.GraphQL.Transactions;
 using KopiAku.GraphQL.StocksManagement;
-using KopiAku.GraphQL.ContentsManagement;
+using KopiAku.GraphQL.HeroContent;
+using KopiAku.GraphQL.AboutUs;
+using KopiAku.GraphQL.Promotion;
+using KopiAku.GraphQL.Carousel;
+using KopiAku.GraphQL.Contact;
 
 Env.Load();
 
@@ -99,6 +103,11 @@ builder.Services.AddGraphQLServer()
     .AddType<Recipe>()
     .AddType<Stock>()
     .AddType<StockLog>()
+    .AddType<HeroContent>()
+    .AddType<AboutUsContent>()
+    .AddType<PromotionContent>()
+    .AddType<CarouselContent>()
+    .AddType<ContactContent>()
     .AddTypeExtension<DashboardQueries>()
     .AddTypeExtension<UserQueries>()
     .AddTypeExtension<UserMutations>()
@@ -118,8 +127,16 @@ builder.Services.AddGraphQLServer()
     .AddTypeExtension<StockResolvers>()
     .AddTypeExtension<StockLogResolvers>()
     .AddTypeExtension<StockManagementMutations>()
-    .AddTypeExtension<ContentManagementQueries>()
-    .AddTypeExtension<ContentManagementMutations>()
+    .AddTypeExtension<HeroContentQueries>()
+    .AddTypeExtension<HeroContentMutations>()
+    .AddTypeExtension<AboutUsContentQueries>()
+    .AddTypeExtension<AboutUsContentMutations>()
+    .AddTypeExtension<PromotionContentQueries>()
+    .AddTypeExtension<PromotionContentMutations>()
+    .AddTypeExtension<CarouselContentQueries>()
+    .AddTypeExtension<CarouselContentMutations>()
+    .AddTypeExtension<ContactContentQueries>()
+    .AddTypeExtension<ContactContentMutations>()
     .AddAuthorization()
     .AddMongoDbFiltering()
     .AddMongoDbSorting()

@@ -9,10 +9,15 @@ using HotChocolate.Authorization;
 namespace KopiAku.GraphQL.Users
 {
     [ExtendObjectType(typeof(Mutation))]
-    public class UserMutations(IAmazonS3 s3Client)
+    public class UserMutations
     {
-        private readonly IAmazonS3 _s3Client = s3Client;
+        private readonly IAmazonS3 _s3Client;
         private readonly string _bucketName = "kopiaku-bucket";
+
+        public UserMutations(IAmazonS3 s3Client)
+        {
+            _s3Client = s3Client;
+        }
 
         [AllowAnonymous]
         public async Task<LoginResponse> LoginAsync(
@@ -26,6 +31,11 @@ namespace KopiAku.GraphQL.Users
             if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.PasswordHash))
             {
                 throw new GraphQLException("Invalid username or password.");
+            }
+
+            if (!user.IsActive)
+            {
+                throw new GraphQLException("Your account is not active. Please contact an administrator.");
             }
 
             // In a real application, generate a JWT or similar token here
@@ -44,6 +54,7 @@ namespace KopiAku.GraphQL.Users
                 Token = token,
                 Id = user.Id,
                 Name = user.Name,
+                Nickname = user.Nickname,
                 Username = user.Username,
                 ProfilePictureUrl = user.ProfilePictureUrl,
                 Role = user.Role,
@@ -69,6 +80,7 @@ namespace KopiAku.GraphQL.Users
             var newUser = new User
             {
                 Name = input.Name,
+                Nickname = input.Nickname,
                 Username = input.Username,
                 Email = input.Email,
                 Role = "User",
@@ -83,6 +95,7 @@ namespace KopiAku.GraphQL.Users
             {
                 Id = newUser.Id,
                 Name = newUser.Name,
+                Nickname = newUser.Nickname,
                 Username = newUser.Username,
                 Email = newUser.Email,
                 Role = newUser.Role,
@@ -95,7 +108,7 @@ namespace KopiAku.GraphQL.Users
         [Authorize]
         public async Task<UpdateUserProfileResponse> UpdateUserProfileAsync(
             string userId,
-            RegisterInput input,
+            UpdateUserProfileInput input,
             [GraphQLType(typeof(UploadType))] IFile? profilePicture,
             [Service] IMongoDatabase database)
         {
@@ -111,17 +124,18 @@ namespace KopiAku.GraphQL.Users
                 // Upload new profile picture to S3
                 var imageKey = $"{userId}/{Guid.NewGuid()}_{profilePicture.Name}";
                 var putRequest = new PutObjectRequest
-                    {
-                        BucketName = _bucketName,
-                        Key = imageKey,
-                        InputStream = profilePicture.OpenReadStream(),
-                        ContentType = profilePicture.ContentType
-                    };
-                    await _s3Client.PutObjectAsync(putRequest);
+                {
+                    BucketName = _bucketName,
+                    Key = imageKey,
+                    InputStream = profilePicture.OpenReadStream(),
+                    ContentType = profilePicture.ContentType
+                };
+                await _s3Client.PutObjectAsync(putRequest);
                 user.ProfilePictureUrl = $"https://storage.czn.my.id/{_bucketName}/{imageKey}";
             }
 
             user.Name = input.Name ?? user.Name;
+            user.Nickname = input.Nickname ?? user.Nickname;
             user.Username = input.Username ?? user.Username;
             user.Email = input.Email ?? user.Email;
             user.Contact = input.Contact ?? user.Contact;
@@ -131,6 +145,7 @@ namespace KopiAku.GraphQL.Users
             {
                 Id = user.Id,
                 Name = user.Name,
+                Nickname = user.Nickname,
                 Username = user.Username,
                 Email = user.Email,
                 Role = user.Role,
