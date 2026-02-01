@@ -8,7 +8,6 @@ namespace KopiAku.GraphQL.ContentsManagement
     [ExtendObjectType(typeof(Query))]
     public class ContentManagementQueries
     {
-        [Authorize(Roles = new[] { "Admin" })]
         [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseFiltering]
         [UseSorting]

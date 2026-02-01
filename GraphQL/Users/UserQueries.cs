@@ -52,6 +52,7 @@ namespace KopiAku.GraphQL.Users
                 Id = user.Id,
                 Name = user.Name,
                 Username = user.Username,
+                Nickname = user.Nickname,
                 Email = user.Email,
                 Role = user.Role,
                 Contact = user.Contact,

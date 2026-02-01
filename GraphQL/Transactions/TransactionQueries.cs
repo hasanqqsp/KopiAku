@@ -12,7 +12,7 @@ namespace KopiAku.GraphQL.Transactions
     public class TransactionQueries
     {
         [Authorize]
-        [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
+        [UseOffsetPaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseFiltering]
         [UseSorting]
         public IExecutable<Transaction> GetTransactions([Service] IMongoDatabase database)
@@ -29,7 +29,7 @@ namespace KopiAku.GraphQL.Transactions
         }
 
         [Authorize]
-        [UsePaging(IncludeTotalCount = true, MaxPageSize = 1000)]
+        [UseOffsetPaging(IncludeTotalCount = true, MaxPageSize = 1000)]
         [UseSorting]
         public IExecutable<Transaction> GetTransactionsByUserId(string userId, [Service] IMongoDatabase database)
         {

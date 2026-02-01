@@ -32,3 +32,16 @@ namespace KopiAku.GraphQL.Presences
         }
     }
 }
+
+namespace KopiAku.GraphQL.Presences
+{
+    [ExtendObjectType(typeof(Presence))]
+    public class PresenceResolvers
+    {
+        public async Task<User?> GetUserAsync([Parent] Presence presence, [Service] IMongoDatabase database)
+        {
+            var collection = database.GetCollection<User>("users");
+            return await collection.Find(u => u.Id == presence.UserId).FirstOrDefaultAsync();
+        }
+    }
+}

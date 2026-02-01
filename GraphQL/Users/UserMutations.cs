@@ -5,6 +5,8 @@ using KopiAku.DTOs;
 using Amazon.S3;
 using Amazon.S3.Model;
 using HotChocolate.Authorization;
+using System.Security.Claims;
+using HotChocolate.Types;
 
 namespace KopiAku.GraphQL.Users
 {
@@ -20,37 +22,50 @@ namespace KopiAku.GraphQL.Users
             [Service] IMongoDatabase database,
             [Service] JWTService jwtService)
         {
-            var collection = database.GetCollection<User>("users");
-
-            var user = await collection.Find(u => u.Username.ToLower() == input.Username.ToLower()).FirstOrDefaultAsync();
-            if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.PasswordHash))
+            try
             {
-                throw new GraphQLException("Invalid username or password.");
+                var collection = database.GetCollection<User>("users");
+
+                var user = await collection.Find(u => u.Username.ToLower() == input.Username.ToLower()).FirstOrDefaultAsync();
+                if (user == null || !BCrypt.Net.BCrypt.Verify(input.Password, user.PasswordHash))
+                {
+                    throw new GraphQLException("Invalid username or password.");
+                }
+
+                if (!user.IsActive)
+                {
+                    throw new GraphQLException("Account is inactive.");
+                }
+
+                // In a real application, generate a JWT or similar token here
+                var token = jwtService.GenerateToken(user);
+
+                var presenceCollection = database.GetCollection<Presence>("presences");
+                var utcNow = DateTime.UtcNow;
+                var offset = TimeSpan.FromHours(7);
+                var nowInTz = utcNow + offset;
+                var todayStart = nowInTz.Date - offset;
+                var todayEnd = todayStart + TimeSpan.FromDays(1);
+                var presence = await presenceCollection.Find(p => p.UserId == user.Id && p.CheckInTime >= todayStart && p.CheckInTime < todayEnd && p.CheckOutTime == default(DateTime)).FirstOrDefaultAsync();
+
+                return new LoginResponse
+                {
+                    Token = token,
+                    Id = user.Id,
+                    Name = user.Name,
+                    Username = user.Username,
+                    Nickname = user.Nickname,
+                    ProfilePictureUrl = user.ProfilePictureUrl,
+                    Role = user.Role,
+                    IsActive = user.IsActive,
+                    Email = user.Email,
+                    Presence = presence
+                };
             }
-
-            // In a real application, generate a JWT or similar token here
-            var token = jwtService.GenerateToken(user);
-
-            var presenceCollection = database.GetCollection<Presence>("presences");
-            var utcNow = DateTime.UtcNow;
-            var offset = TimeSpan.FromHours(7);
-            var nowInTz = utcNow + offset;
-            var todayStart = nowInTz.Date - offset;
-            var todayEnd = todayStart + TimeSpan.FromDays(1);
-            var presence = await presenceCollection.Find(p => p.UserId == user.Id && p.CheckInTime >= todayStart && p.CheckInTime < todayEnd && p.CheckOutTime == default(DateTime)).FirstOrDefaultAsync();
-
-            return new LoginResponse
+            catch (Exception ex)
             {
-                Token = token,
-                Id = user.Id,
-                Name = user.Name,
-                Username = user.Username,
-                ProfilePictureUrl = user.ProfilePictureUrl,
-                Role = user.Role,
-                IsActive = user.IsActive,
-                Email = user.Email,
-                Presence = presence
-            };
+                throw new GraphQLException($"Login failed: {ex.Message}");
+            }
         }
 
         [AllowAnonymous]
@@ -70,6 +85,7 @@ namespace KopiAku.GraphQL.Users
             {
                 Name = input.Name,
                 Username = input.Username,
+                Nickname = input.Nickname,
                 Email = input.Email,
                 Role = "User",
                 Contact = input.Contact,
@@ -84,6 +100,7 @@ namespace KopiAku.GraphQL.Users
                 Id = newUser.Id,
                 Name = newUser.Name,
                 Username = newUser.Username,
+                Nickname = newUser.Nickname,
                 Email = newUser.Email,
                 Role = newUser.Role,
                 Contact = newUser.Contact,
@@ -124,6 +141,7 @@ namespace KopiAku.GraphQL.Users
             user.Name = input.Name ?? user.Name;
             user.Username = input.Username ?? user.Username;
             user.Email = input.Email ?? user.Email;
+            user.Nickname = input.Nickname ?? user.Nickname;
             user.Contact = input.Contact ?? user.Contact;
 
             await collection.ReplaceOneAsync(u => u.Id == userId, user);
@@ -132,6 +150,7 @@ namespace KopiAku.GraphQL.Users
                 Id = user.Id,
                 Name = user.Name,
                 Username = user.Username,
+                Nickname = user.Nickname,
                 Email = user.Email,
                 Role = user.Role,
                 Contact = user.Contact,
@@ -189,6 +208,113 @@ namespace KopiAku.GraphQL.Users
             });
 
             return result;
+        }
+
+        [Authorize]
+        public async Task<bool> ChangePasswordAsync(
+            ChangePasswordInput input,
+            [Service] IMongoDatabase database,
+            ClaimsPrincipal claimsPrincipal)
+        {
+            var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new GraphQLException("Unauthorized");
+            }
+
+            var collection = database.GetCollection<User>("users");
+            var user = await collection.Find(u => u.Id == userId).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                throw new GraphQLException("User not found");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(input.CurrentPassword, user.PasswordHash))
+            {
+                throw new GraphQLException("Current password is incorrect");
+            }
+
+            var newHash = BCrypt.Net.BCrypt.HashPassword(input.NewPassword);
+            var update = Builders<User>.Update.Set(u => u.PasswordHash, newHash);
+            await collection.UpdateOneAsync(u => u.Id == userId, update);
+
+            return true;
+        }
+
+        [Authorize]
+        public async Task<UpdateUserProfileResponse> UpdateMyProfileAsync(
+            UpdateUserProfileInput input,
+            [GraphQLType(typeof(UploadType))] IFile? profilePicture,
+            [Service] IMongoDatabase database,
+            ClaimsPrincipal claimsPrincipal)
+        {
+            var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new GraphQLException("Unauthorized");
+            }
+
+            var collection = database.GetCollection<User>("users");
+            var user = await collection.Find(u => u.Id == userId).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                throw new GraphQLException("User not found");
+            }
+
+            // Check uniqueness for username and email if provided
+            if (!string.IsNullOrEmpty(input.Username) && input.Username != user.Username)
+            {
+                var existingUsername = await collection.Find(u => u.Username.ToLower() == input.Username.ToLower() && u.Id != userId).FirstOrDefaultAsync();
+                if (existingUsername != null)
+                {
+                    throw new GraphQLException("Username already exists");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(input.Email) && input.Email != user.Email)
+            {
+                var existingEmail = await collection.Find(u => u.Email == input.Email && u.Id != userId).FirstOrDefaultAsync();
+                if (existingEmail != null)
+                {
+                    throw new GraphQLException("Email already exists");
+                }
+            }
+
+            if (profilePicture != null)
+            {
+                // Upload new profile picture to S3
+                var imageKey = $"{userId}/{Guid.NewGuid()}_{profilePicture.Name}";
+                var putRequest = new PutObjectRequest
+                {
+                    BucketName = _bucketName,
+                    Key = imageKey,
+                    InputStream = profilePicture.OpenReadStream(),
+                    ContentType = profilePicture.ContentType
+                };
+                await _s3Client.PutObjectAsync(putRequest);
+                user.ProfilePictureUrl = $"https://storage.czn.my.id/{_bucketName}/{imageKey}";
+            }
+            
+
+            user.Name = input.Name ?? user.Name;
+            user.Username = input.Username ?? user.Username;
+            user.Nickname = input.Nickname ?? user.Nickname;
+            user.Email = input.Email ?? user.Email;
+            user.Contact = input.Contact ?? user.Contact;
+
+            await collection.ReplaceOneAsync(u => u.Id == userId, user);
+            return new UpdateUserProfileResponse
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Username = user.Username,
+                Nickname = user.Nickname,
+                Email = user.Email,
+                Role = user.Role,
+                Contact = user.Contact,
+                IsActive = user.IsActive,
+                ProfilePictureUrl = user.ProfilePictureUrl
+            };
         }
     }
 }
