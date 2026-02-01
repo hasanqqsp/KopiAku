@@ -32,11 +32,6 @@ namespace KopiAku.GraphQL.Users
                     throw new GraphQLException("Invalid username or password.");
                 }
 
-                if (!user.IsActive)
-                {
-                    throw new GraphQLException("Account is inactive.");
-                }
-
                 // In a real application, generate a JWT or similar token here
                 var token = jwtService.GenerateToken(user);
 
